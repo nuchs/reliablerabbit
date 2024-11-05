@@ -8,7 +8,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-const reconnectPeriod = 3 * time.Millisecond
+const reconnectPeriod = 3 * time.Second
 
 type Client struct {
 	ctx    context.Context
