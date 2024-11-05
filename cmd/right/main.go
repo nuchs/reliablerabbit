@@ -45,7 +45,7 @@ func mainLoop(client *rampant.Client) {
 			data := fmt.Sprintf("Tick %d", count)
 			client.Send(data)
 		case msg := <-recv:
-			log.Printf("Received a messagee %s", msg.Body)
+			log.Printf("Received a message %s", msg.Body)
 		}
 	}
 }

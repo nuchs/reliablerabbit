@@ -3,19 +3,19 @@ services:
     image: rabbitmq:4.0-management
     container_name: michaelRabbit
     healthcheck:
-      test: ['CMD', 'rabbitmqctl', 'status']
+      test: [ 'CMD', 'rabbitmqctl', 'status' ]
       interval: 60s
       timeout: 30s
-      retires: 2
-      start_peroid: 60s
+      retries: 2
+      start_period: 60s
       start_interval: 5s
     volumes:
-      - .data:/var/lib/rabbitmq
+      - data:/var/lib/rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
     networks:
-      rabbity
+      - rabbity
 
   right:
     build:
@@ -23,8 +23,8 @@ services:
       args:
         TARGET: right
     depends_on:
-    rabbit:
-      condition: service_healthy
+      rabbit:
+        condition: service_healthy
     networks:
       - rabbity
 
@@ -37,7 +37,6 @@ services:
       - right
     networks:
       - rabbity
-
 
 networks:
   rabbity:

@@ -32,9 +32,9 @@ func NewClient(ctx context.Context, addr, in, out string) *Client {
 		in,
 		client.recv,
 	})
-	go client.connect("inbound", addr, rabbitSend{
+	go client.connect("outbound", addr, rabbitSend{
 		ctx,
-		in,
+		out,
 		client.send,
 	})
 
@@ -82,7 +82,7 @@ func (c Client) connect(name, addr string, action actionable) {
 }
 
 func (c Client) open(conn *amqp.Connection, action actionable) error {
-	connClosed := conn.NotifyClose(make(chan *amqp.Error))
+	connClosed := conn.NotifyClose(make(chan *amqp.Error, 1))
 	for {
 		log.Printf("[%s] (re)opening channel", action.name())
 		ch, err := conn.Channel()
@@ -98,7 +98,7 @@ func (c Client) open(conn *amqp.Connection, action actionable) error {
 			}
 		}
 
-		log.Printf("[%s] channel opend", action.name())
+		log.Printf("[%s] Channel opened", action.name())
 		err = action.run(ch)
 		log.Printf("[%s] Channel closed", action.name())
 		if err != nil {
@@ -119,11 +119,11 @@ type rabbitReceive struct {
 }
 
 func (r rabbitReceive) name() string {
-	return r.name()
+	return r.key
 }
 
 func (r rabbitReceive) run(ch *amqp.Channel) error {
-	chClosed := ch.NotifyClose(make(chan *amqp.Error))
+	chClosed := ch.NotifyClose(make(chan *amqp.Error, 1))
 	for {
 		log.Printf("[%s] (re)starting consumer", r.key)
 		consumer, err := ch.Consume(r.key, "", false, false, false, false, nil)
@@ -139,7 +139,7 @@ func (r rabbitReceive) run(ch *amqp.Channel) error {
 			}
 		}
 
-		log.Printf("[%s] consumer started", r.key)
+		log.Printf("[%s] Consumer started", r.key)
 		r.reciverLoop(consumer)
 		log.Printf("[%s] Consumer stopped", r.key)
 	}
@@ -170,9 +170,9 @@ func (s rabbitSend) name() string {
 }
 
 func (s rabbitSend) run(ch *amqp.Channel) error {
-	chClosed := ch.NotifyClose(make(chan *amqp.Error))
+	chClosed := ch.NotifyClose(make(chan *amqp.Error, 1))
+	log.Printf("[%s] (re)starting consumer", s.key)
 	for {
-		log.Printf("[%s] (re)starting consumer", s.key)
 		select {
 		case <-s.ctx.Done():
 			log.Printf("[%s] Client closed, exiting send loop", s.key)
